@@ -474,7 +474,6 @@ var ring1Cmd = &cobra.Command{
 			log.WithError(err).Error("ring2 did not connect successfully")
 			return
 		}
-
 		slirpCmd := exec.Command(filepath.Join(filepath.Dir(ring2Opts.SupervisorPath), "slirp4netns"),
 			"--configure",
 			"--mtu=65520",
@@ -487,13 +486,17 @@ var ring1Cmd = &cobra.Command{
 			Pdeathsig: syscall.SIGKILL,
 		}
 
-		err = slirpCmd.Start()
+		client, err = connectToInWorkspaceDaemonService(ctx)
 		if err != nil {
-			log.WithError(err).Error("cannot start slirp4netns")
+			log.WithError(err).Error("cannot connect to daemon")
 			return
 		}
-		//nolint:errcheck
-		defer slirpCmd.Process.Kill()
+		_, err = client.SetupPairVeths(ctx, &daemonapi.SetupPairVethsRequest{Pid: int64(cmd.Process.Pid)})
+		if err != nil {
+			log.WithError(err).Error("cannot setup pair of veths")
+			return
+		}
+		client.Close()
 
 		log.Info("signaling to child process")
 		_, err = msgutil.MarshalToWriter(ring2Conn, ringSyncMsg{
