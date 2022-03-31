@@ -89,6 +89,7 @@ import {
 import {
     GetLicenseInfoResult,
     LicenseFeature,
+    LicenseInfo,
     LicenseValidationResult,
 } from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
@@ -157,6 +158,7 @@ import { ProjectEnvVar } from "@gitpod/gitpod-protocol/src/protocol";
 import { InstallationAdminSettings, TelemetryData } from "@gitpod/gitpod-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { InstallationAdminTelemetryDataProvider } from "../installation-admin/telemetry-data-provider";
+import { LicenseEvaluator } from "@gitpod/licensor/lib";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -183,6 +185,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(InstallationAdminDB) protected readonly installationAdminDb: InstallationAdminDB;
     @inject(InstallationAdminTelemetryDataProvider)
     protected readonly telemetryDataProvider: InstallationAdminTelemetryDataProvider;
+    @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
 
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
     @inject(WorkspaceManagerClientProvider)
@@ -2601,6 +2604,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async getLicenseInfo(): Promise<GetLicenseInfoResult> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Licensing is implemented in Gitpod's Enterprise Edition`);
+    }
+
+    async adminGetLicense(ctx: TraceContext): Promise<LicenseInfo> {
+        const licensePayload = this.licenseEvaluator.inspect();
+        const licenseValid = this.licenseEvaluator.validate();
+
+        const userCount = await this.userDB.getUserCount(true);
+
+        return {
+            key: licensePayload.id,
+            seats: licensePayload.seats,
+            availableSeats: licensePayload.seats - userCount,
+            valid: licenseValid.valid,
+            validUntil: licensePayload.validUntil,
+        };
     }
 
     async licenseIncludesFeature(ctx: TraceContext, feature: LicenseFeature): Promise<boolean> {
