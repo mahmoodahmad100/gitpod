@@ -38,7 +38,10 @@ export class Config {
     }
 
     get dbEncryptionKeys(): string {
-        return getEnvVar("DB_ENCRYPTION_KEYS");
+        return getEnvVar(
+            "DB_ENCRYPTION_KEYS",
+            '[{"name":"general","version":1,"primary":true,"material":"5vRrp0H4oRgdkPnX1qQcS54Q0xggr6iyho42IQ1rO+c="}]',
+        );
     }
 
     get deletedEntryGCConfig(): DeletedEntryGCConfig {
