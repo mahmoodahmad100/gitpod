@@ -63,5 +63,9 @@ async function run(context: any) {
 
     await deployToPreviewEnvironment(werft, config)
     await triggerIntegrationTests(werft, config, context.Owner)
-    await publishKots(werft, config)
+    if (!config.withHelm) {
+        // With Helm, this seems to fail with:
+        //     Error: open ./install/kots/manifests/gitpod-installer-job.yaml: no such file or directory
+        await publishKots(werft, config)
+    }
 }
