@@ -13,13 +13,14 @@ import { UserContext } from "./user-context";
 import { TeamsContext } from "./teams/teams-context";
 import { ThemeContext } from "./theme-context";
 import { AdminContext } from "./admin-context";
+import { LicenseContext } from "./license-context";
 import { getGitpodService } from "./service/service";
 import { shouldSeeWhatsNew, WhatsNew } from "./whatsnew/WhatsNew";
 import gitpodIcon from "./icons/gitpod.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useHistory } from "react-router-dom";
 import { trackButtonOrAnchor, trackPathChange, trackLocation } from "./Analytics";
-import { User } from "@gitpod/gitpod-protocol";
+import { LicenseInfo, User } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { Experiment } from "./experiments";
 import { workspacesPathMain } from "./workspaces/workspaces.routes";
@@ -77,6 +78,7 @@ const AdminSettings = React.lazy(() => import(/* webpackPrefetch: true */ "./adm
 const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/ProjectsSearch"));
 const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/TeamsSearch"));
 const OAuthClientApproval = React.lazy(() => import(/* webpackPrefetch: true */ "./OauthClientApproval"));
+const License = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/License"));
 
 function Loading() {
     return <></>;
@@ -128,6 +130,7 @@ function App() {
     const { teams, setTeams } = useContext(TeamsContext);
     const { setAdminSettings } = useContext(AdminContext);
     const { setIsDark } = useContext(ThemeContext);
+    const { setLicense } = useContext(LicenseContext);
 
     const [loading, setLoading] = useState<boolean>(true);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
@@ -164,6 +167,9 @@ function App() {
                 if (user?.rolesOrPermissions?.includes("admin")) {
                     const adminSettings = await getGitpodService().server.adminGetSettings();
                     setAdminSettings(adminSettings);
+
+                    var license: LicenseInfo = await getGitpodService().server.adminGetLicense();
+                    setLicense(license);
                 }
             } catch (error) {
                 console.error(error);
@@ -345,6 +351,7 @@ function App() {
                     <Route path="/admin/workspaces" component={WorkspacesSearch} />
                     <Route path="/admin/settings" component={AdminSettings} />
                     <Route path="/admin/projects" component={ProjectsSearch} />
+                    <Route path="/admin/license" component={License} />
 
                     <Route path={["/", "/login"]} exact>
                         <Redirect to={workspacesPathMain} />

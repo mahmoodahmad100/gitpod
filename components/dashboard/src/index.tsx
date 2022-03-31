@@ -9,6 +9,7 @@ import ReactDOM from "react-dom";
 import App from "./App";
 import { UserContextProvider } from "./user-context";
 import { AdminContextProvider } from "./admin-context";
+import { LicenseContextProvider } from "./license-context";
 import { TeamsContextProvider } from "./teams/teams-context";
 import { ProjectContextProvider } from "./projects/project-context";
 import { ThemeContextProvider } from "./theme-context";
@@ -21,17 +22,19 @@ ReactDOM.render(
     <React.StrictMode>
         <UserContextProvider>
             <AdminContextProvider>
-                <TeamsContextProvider>
-                    <ProjectContextProvider>
-                        <ThemeContextProvider>
-                            <StartWorkspaceModalContextProvider>
-                                <BrowserRouter>
-                                    <App />
-                                </BrowserRouter>
-                            </StartWorkspaceModalContextProvider>
-                        </ThemeContextProvider>
-                    </ProjectContextProvider>
-                </TeamsContextProvider>
+                <LicenseContextProvider>
+                    <TeamsContextProvider>
+                        <ProjectContextProvider>
+                            <ThemeContextProvider>
+                                <StartWorkspaceModalContextProvider>
+                                    <BrowserRouter>
+                                        <App />
+                                    </BrowserRouter>
+                                </StartWorkspaceModalContextProvider>
+                            </ThemeContextProvider>
+                        </ProjectContextProvider>
+                    </TeamsContextProvider>
+                </LicenseContextProvider>
             </AdminContextProvider>
         </UserContextProvider>
     </React.StrictMode>,

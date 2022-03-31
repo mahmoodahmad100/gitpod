@@ -21,5 +21,11 @@ export interface LicensePayload {
     domain: string
     level: LicenseLevel
     validUntil: string
+    type: LicenseType
     seats: number
+}
+
+export enum LicenseType {
+    LicenseTypeGitpod = "gitpod",
+    LicenseTypeReplicated = "replicated",
 }
