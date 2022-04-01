@@ -23,6 +23,7 @@ export default function License() {
     }
 
     const featureList = license?.enabledFeatures;
+    const features = license?.features;
 
     return (
         <div>
@@ -38,9 +39,15 @@ export default function License() {
                             <h4>License Key</h4>
                             <input type="text" className="w-full" disabled={true} value={license?.key} />
                             <h4>Features Enabled</h4>
-                            {featureList &&
-                                featureList.map((feat) => (
-                                    <CheckBox key={feat} title={feat} desc="" checked={true} disabled={true} />
+                            {features &&
+                                features.map((feat) => (
+                                    <CheckBox
+                                        key={feat}
+                                        title={feat}
+                                        desc=""
+                                        checked={featureList?.includes(feat) || false}
+                                        disabled={true}
+                                    />
                                 ))}
                         </div>
                     </div>

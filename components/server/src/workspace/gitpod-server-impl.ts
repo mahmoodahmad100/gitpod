@@ -2623,7 +2623,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             valid: licenseValid.valid,
             type: "gitpod",
             validUntil: licensePayload.validUntil,
-            features: features,
+            features: features.map((feat) => Feature[feat as keyof typeof Feature]),
             enabledFeatures: enabledFeatures,
         };
     }
