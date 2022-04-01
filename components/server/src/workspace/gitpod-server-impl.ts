@@ -2622,7 +2622,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             availableSeats: licensePayload.seats - userCount,
             valid: licenseValid.valid,
             errorMsg: licenseValid.msg,
-            type: "gitpod",
+            type: licensePayload.type,
             validUntil: licensePayload.validUntil,
             features: features.map((feat) => Feature[feat as keyof typeof Feature]),
             enabledFeatures: enabledFeatures,

@@ -25,17 +25,19 @@ export default function License() {
     const featureList = license?.enabledFeatures;
     const features = license?.features;
 
+    const unLimitedUsers = license?.seats == 0;
+
     return (
         <div>
             <PageWithSubMenu subMenu={adminMenu} title="License" subtitle="License information of your account.">
                 {!license?.valid ? (
                     <p className="text-base text-gray-500 pb-4 max-w-2xl">
-                        "You do not have a valid license associated with this account. " + {license?.errorMsg}
+                        You do not have a valid license associated with this account. {license?.errorMsg}
                     </p>
                 ) : (
                     <div>
                         <p className="text-base text-gray-500 pb-4 max-w-2xl">
-                            "You have a valid license associated with this account. Following are the details:"
+                            You have a valid license associated with this account. Following are the details:
                         </p>
                         <div className="flex flex-col lg:flex-row">
                             <div className="lg:pl-14">
@@ -65,7 +67,12 @@ export default function License() {
                                 </div>
                                 <div className="mt-4">
                                     <h4>Number of seats</h4>
-                                    <input type="text" className="w-full" disabled={true} value={license?.seats} />
+                                    <input
+                                        type="text"
+                                        className="w-full"
+                                        disabled={true}
+                                        value={unLimitedUsers ? "Unlimited" : license?.seats}
+                                    />
                                 </div>
                                 <div className="mt-4">
                                     <h4>Available seats</h4>
@@ -73,7 +80,7 @@ export default function License() {
                                         type="text"
                                         className="w-full"
                                         disabled={true}
-                                        value={license?.availableSeats}
+                                        value={unLimitedUsers ? "Unlimited" : license?.availableSeats}
                                     />
                                 </div>
                             </div>

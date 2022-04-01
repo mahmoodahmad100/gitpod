@@ -30,6 +30,7 @@ type LicensePayload struct {
 	Domain     string       `json:"domain"`
 	Level      LicenseLevel `json:"level"`
 	ValidUntil time.Time    `json:"validUntil"`
+	Type       LicenseType  `json:"type"`
 
 	// Seats == 0 means there's no seat limit
 	Seats int `json:"seats"`
@@ -119,6 +120,8 @@ var fallbackLicense = LicensePayload{
 	ID:    "fallback-license",
 	Level: LevelTeam,
 	Seats: 0,
+	// we set default licese type as "Gitpod"
+	Type: LicenseTypeGitpod,
 	// Domain, ValidUntil are free for all
 }
 
@@ -127,6 +130,8 @@ var defaultLicense = LicensePayload{
 	ID:    "default-license",
 	Level: LevelEnterprise,
 	Seats: 10,
+	// we set default licese type as "Gitpod"
+	Type: LicenseTypeGitpod,
 	// Domain, ValidUntil are free for all
 }
 
