@@ -22,6 +22,7 @@ export interface LicenseInfo {
     features?: string[];
     enabledFeatures?: string[];
     type?: string;
+    errorMsg?: string;
 }
 
 export interface GetLicenseInfoResult {
