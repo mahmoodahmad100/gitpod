@@ -11,6 +11,7 @@ import { LicenseContext } from "../license-context";
 import { useContext } from "react";
 import { UserContext } from "../user-context";
 import { Redirect } from "react-router-dom";
+import CheckBox from "../components/CheckBox";
 
 export default function License() {
     // @ts-ignore
@@ -20,6 +21,8 @@ export default function License() {
     if (!user || !user?.rolesOrPermissions?.includes("admin")) {
         return <Redirect to="/" />;
     }
+
+    const featureMap = license?.features;
 
     return (
         <div>
@@ -34,13 +37,35 @@ export default function License() {
                         <div className="mt-4">
                             <h4>License Key</h4>
                             <input type="text" className="w-full" disabled={true} value={license?.key} />
+                            <h4>Features Enabled</h4>
+                            {featureMap &&
+                                Object.keys(featureMap).forEach((feat) => {
+                                    <CheckBox
+                                        key={feat}
+                                        title={capitalizeInitials(feat)}
+                                        desc=""
+                                        checked={featureMap.get(feat) || false}
+                                        disabled={true}
+                                    />;
+                                })}
+                        </div>
+                    </div>
+                    <div className="lg:pl-14">
+                        <div className="mt-4">
+                            <h4>License Type</h4>
+                            <input
+                                type="text"
+                                className="w-full"
+                                disabled={true}
+                                value={license?.type ? capitalizeInitials(license.type) : ""}
+                            />
                         </div>
                         <div className="mt-4">
                             <h4>Number of seats</h4>
                             <input type="text" className="w-full" disabled={true} value={license?.seats} />
                         </div>
                         <div className="mt-4">
-                            <h4>Type</h4>
+                            <h4>Available seats</h4>
                             <input type="text" className="w-full" disabled={true} value={license?.availableSeats} />
                         </div>
                     </div>
@@ -48,4 +73,13 @@ export default function License() {
             </PageWithSubMenu>
         </div>
     );
+}
+
+function capitalizeInitials(str: string): string {
+    return str
+        .split("-")
+        .map((item) => {
+            return item.charAt(0).toUpperCase() + item.slice(1);
+        })
+        .join(" ");
 }

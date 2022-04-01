@@ -159,6 +159,7 @@ import { InstallationAdminSettings, TelemetryData } from "@gitpod/gitpod-protoco
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { InstallationAdminTelemetryDataProvider } from "../installation-admin/telemetry-data-provider";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
+import { Feature } from "@gitpod/licensor/lib/api";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -2612,13 +2613,30 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const userCount = await this.userDB.getUserCount(true);
 
+        const features = await this.licenseFeatures(ctx);
+
         return {
             key: licensePayload.id,
             seats: licensePayload.seats,
             availableSeats: licensePayload.seats - userCount,
             valid: licenseValid.valid,
+            type: "gitpod",
             validUntil: licensePayload.validUntil,
+            features: features,
         };
+    }
+
+    async licenseFeatures(ctx: TraceContext): Promise<Map<string, boolean>> {
+        var featuresMap: Map<string, boolean> = new Map();
+        const userCount = await this.userDB.getUserCount(true);
+        const features = Object.keys(Feature);
+        for (const feature of features) {
+            const featureName: Feature = Feature[feature as keyof typeof Feature];
+            const enabled = this.licenseEvaluator.isEnabled(featureName, userCount);
+            featuresMap.set(featureName, enabled);
+        }
+
+        return featuresMap;
     }
 
     async licenseIncludesFeature(ctx: TraceContext, feature: LicenseFeature): Promise<boolean> {

@@ -15,10 +15,12 @@ export type LicenseIssue = "seats-exhausted";
 export interface LicenseInfo {
     key: string;
     seats: number;
-    availableSeats: number;
+    availableSeats?: number;
     valid: boolean;
     validUntil: string;
     plan?: string;
+    features?: Map<string, boolean>;
+    type?: string;
 }
 
 export interface GetLicenseInfoResult {
