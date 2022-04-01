@@ -22,7 +22,8 @@ export default function License() {
         return <Redirect to="/" />;
     }
 
-    const featureMap = license?.features;
+    const featureList = license?.features;
+    const enabledFeatures = license?.enabledFeatures;
 
     return (
         <div>
@@ -38,13 +39,13 @@ export default function License() {
                             <h4>License Key</h4>
                             <input type="text" className="w-full" disabled={true} value={license?.key} />
                             <h4>Features Enabled</h4>
-                            {featureMap &&
-                                Object.keys(featureMap).forEach((feat) => {
+                            {featureList &&
+                                featureList.forEach((feat, i) => {
                                     <CheckBox
                                         key={feat}
                                         title={capitalizeInitials(feat)}
                                         desc=""
-                                        checked={featureMap.get(feat) || false}
+                                        checked={enabledFeatures?.includes(feat) || false}
                                         disabled={true}
                                     />;
                                 })}

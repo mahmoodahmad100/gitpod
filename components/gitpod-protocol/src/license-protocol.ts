@@ -19,7 +19,8 @@ export interface LicenseInfo {
     valid: boolean;
     validUntil: string;
     plan?: string;
-    features?: Map<string, boolean>;
+    features?: string[];
+    enabledFeatures?: string[];
     type?: string;
 }
 
