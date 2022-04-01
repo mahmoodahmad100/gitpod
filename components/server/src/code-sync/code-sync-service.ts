@@ -34,6 +34,7 @@ import { accessCodeSyncStorage, UserRateLimiter } from "../auth/rate-limiter";
 import { increaseApiCallUserCounter } from "../prometheus-metrics";
 import { Config } from "../config";
 import { CachingBlobServiceClientProvider } from "@gitpod/content-service/lib/sugar";
+import { TheiaPluginService } from "../theia-plugin/theia-plugin-service";
 
 // By default: 5 kind of resources * 20 revs * 1Mb = 100Mb max in the content service for user data.
 const defaultRevLimit = 20;
@@ -79,6 +80,9 @@ export class CodeSyncService {
 
     @inject(CodeSyncResourceDB)
     private readonly db: CodeSyncResourceDB;
+
+    @inject(TheiaPluginService)
+    private readonly theiaPluginService: TheiaPluginService;
 
     @inject(UserStorageResourcesDB)
     private readonly userStorageResourcesDB: UserStorageResourcesDB;
@@ -182,7 +186,7 @@ export class CodeSyncService {
                 let version = 1;
                 let value = "";
                 if (resourceKey === SyncResource.Extensions) {
-                    value = await this.getTheiaCodeSyncResource(req.user.id);
+                    value = await this.theiaPluginService.getCodeSyncResource(req.user.id);
                     version = 5;
                 } else if (resourceKey === SyncResource.Settings) {
                     const settings = await this.userStorageResourcesDB.get(req.user.id, userSettingsUri);

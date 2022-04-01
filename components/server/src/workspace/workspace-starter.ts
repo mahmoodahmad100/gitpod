@@ -93,6 +93,7 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { ScopedResourceGuard } from "../auth/resource-access";
 import { Config } from "../config";
 import { OneTimeSecretServer } from "../one-time-secret-server";
+import { TheiaPluginService } from "../theia-plugin/theia-plugin-service";
 import { AuthorizationService } from "../user/authorization-service";
 import { TokenProvider } from "../user/token-provider";
 import { UserService } from "../user/user-service";
@@ -133,6 +134,7 @@ export class WorkspaceStarter {
     @inject(ImageSourceProvider) protected readonly imageSourceProvider: ImageSourceProvider;
     @inject(UserService) protected readonly userService: UserService;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
+    @inject(TheiaPluginService) protected readonly theiaService: TheiaPluginService;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(ContextParser) protected contextParser: ContextParser;
@@ -1074,6 +1076,21 @@ export class WorkspaceStarter {
             ev.setValue(JSON.stringify(workspace.config.tasks));
             envvars.push(ev);
         }
+        const addExtensionsToEnvvarPromise = this.theiaService
+            .resolvePlugins(user.id, { config: workspace.config })
+            .then((result) => {
+                if (result) {
+                    const resolvedExtensions = new EnvironmentVariable();
+                    resolvedExtensions.setName("GITPOD_RESOLVED_EXTENSIONS");
+                    resolvedExtensions.setValue(JSON.stringify(result.resolved));
+                    envvars.push(resolvedExtensions);
+
+                    const externalExtensions = new EnvironmentVariable();
+                    externalExtensions.setName("GITPOD_EXTERNAL_EXTENSIONS");
+                    externalExtensions.setValue(JSON.stringify(result.external));
+                    envvars.push(externalExtensions);
+                }
+            });
 
         const vsxRegistryUrl = new EnvironmentVariable();
         vsxRegistryUrl.setName("VSX_REGISTRY_URL");
@@ -1176,6 +1193,7 @@ export class WorkspaceStarter {
 
         const spec = new StartWorkspaceSpec();
         spec.setCheckoutLocation(checkoutLocation!);
+        await addExtensionsToEnvvarPromise;
         await createGitpodTokenPromise;
         spec.setEnvvarsList(envvars);
         spec.setGit(this.createGitSpec(workspace, user));

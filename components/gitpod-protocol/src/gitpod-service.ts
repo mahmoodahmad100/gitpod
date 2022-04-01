@@ -24,6 +24,11 @@ import {
     GuessGitTokenScopesParams,
     GuessedGitTokenScopes,
     ProjectEnvVar,
+    ResolvePluginsParams,
+    PreparePluginUploadParams,
+    ResolvedPlugins,
+    InstallPluginsParams,
+    UninstallPluginParams,
 } from "./protocol";
 import {
     Team,
@@ -216,6 +221,15 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      * retrieves layout information for the given workspace
      */
     getLayout(workspaceId: string): Promise<string | undefined>;
+
+    /**
+     * @param params
+     * @returns promise resolves to an URL to be used for the upload
+     */
+    preparePluginUpload(params: PreparePluginUploadParams): Promise<string>;
+    resolvePlugins(workspaceId: string, params: ResolvePluginsParams): Promise<ResolvedPlugins>;
+    installUserPlugins(params: InstallPluginsParams): Promise<boolean>;
+    uninstallUserPlugin(params: UninstallPluginParams): Promise<boolean>;
 
     guessGitTokenScopes(params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes>;
 

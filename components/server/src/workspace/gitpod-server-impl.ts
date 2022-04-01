@@ -36,15 +36,20 @@ import {
     GitpodServer,
     GitpodToken,
     GitpodTokenType,
+    InstallPluginsParams,
     PermissionName,
     PortVisibility,
     PrebuiltWorkspace,
     PrebuiltWorkspaceContext,
+    PreparePluginUploadParams,
+    ResolvedPlugins,
+    ResolvePluginsParams,
     SetWorkspaceTimeoutResult,
     StartPrebuildContext,
     StartWorkspaceResult,
     Terms,
     Token,
+    UninstallPluginParams,
     User,
     UserEnvVar,
     UserEnvVarValue,
@@ -138,6 +143,7 @@ import { UserDeletionService } from "../user/user-deletion-service";
 import { UserService } from "../user/user-service";
 import { IClientDataPrometheusAdapter } from "./client-data-prometheus-adapter";
 import { ContextParser } from "./context-parser-service";
+import { TheiaPluginService } from "../theia-plugin/theia-plugin-service";
 import { GitTokenScopeGuesser } from "./git-token-scope-guesser";
 import { WorkspaceDeletionService } from "./workspace-deletion-service";
 import { WorkspaceFactory } from "./workspace-factory";
@@ -202,6 +208,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
 
     @inject(IClientDataPrometheusAdapter) protected readonly clientDataPrometheusAdapter: IClientDataPrometheusAdapter;
+
+    @inject(TheiaPluginService) protected readonly pluginService: TheiaPluginService;
 
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
 
@@ -2467,6 +2475,55 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = this.checkUser("hasPermission");
         return this.authorizationService.hasPermission(user, permission);
+    }
+
+    preparePluginUpload(ctx: TraceContext, params: PreparePluginUploadParams): Promise<string> {
+        traceAPIParams(ctx, { params });
+
+        const user = this.checkUser("preparePluginUpload");
+        return this.pluginService.preparePluginUpload(params, user.id);
+    }
+
+    async resolvePlugins(
+        ctx: TraceContext,
+        workspaceId: string,
+        params: ResolvePluginsParams,
+    ): Promise<ResolvedPlugins> {
+        traceAPIParams(ctx, {
+            workspaceId,
+            params: {
+                ...censor(params, "config"),
+                ...(params.config?.vscode
+                    ? {
+                          config: {
+                              vscode: params.config.vscode,
+                          },
+                      }
+                    : {}),
+            },
+        }); // censor config because of size/potential PII, except of vscode parts
+        traceWI(ctx, { workspaceId });
+
+        this.checkUser("resolvePlugins");
+
+        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
+        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+        const result = await this.pluginService.resolvePlugins(workspace.ownerId, params);
+        return result.resolved;
+    }
+
+    installUserPlugins(ctx: TraceContext, params: InstallPluginsParams): Promise<boolean> {
+        traceAPIParams(ctx, { params });
+
+        const userId = this.checkUser("installUserPlugins").id;
+        return this.pluginService.installUserPlugins(userId, params);
+    }
+
+    uninstallUserPlugin(ctx: TraceContext, params: UninstallPluginParams): Promise<boolean> {
+        traceAPIParams(ctx, { params });
+
+        const userId = this.checkUser("uninstallUserPlugin").id;
+        return this.pluginService.uninstallUserPlugin(userId, params);
     }
 
     async guessGitTokenScopes(ctx: TraceContext, params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes> {

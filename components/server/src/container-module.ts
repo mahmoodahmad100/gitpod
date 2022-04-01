@@ -73,6 +73,7 @@ import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { BearerAuth } from "./auth/bearer-authenticator";
 import { TermsProvider } from "./terms/terms-provider";
 import { TosCookie } from "./user/tos-cookie";
+import { TheiaPluginService } from "./theia-plugin/theia-plugin-service";
 import * as grpc from "@grpc/grpc-js";
 import { CodeSyncService } from "./code-sync/code-sync-service";
 import { ContentServiceStorageClient } from "./storage/content-service-client";
@@ -196,6 +197,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderEnvSource).inSingletonScope();
     bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderDBSource).inSingletonScope();
     bind(IWorkspaceManagerClientCallMetrics).toService(IClientCallMetrics);
+
+    bind(TheiaPluginService).toSelf().inSingletonScope();
 
     bind(RabbitMQConsensusLeaderMessenger).toSelf().inSingletonScope();
     bind(ConsensusLeaderMessenger).toService(RabbitMQConsensusLeaderMessenger);

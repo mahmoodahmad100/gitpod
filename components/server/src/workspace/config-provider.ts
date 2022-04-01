@@ -30,6 +30,7 @@ import { MaybeContent } from "../repohost/file-provider";
 import { ConfigurationService } from "../config/configuration-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { AuthorizationService } from "../user/authorization-service";
+import { TheiaPluginService } from "../theia-plugin/theia-plugin-service";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
 
@@ -47,6 +48,7 @@ export class ConfigProvider {
     @inject(GitpodFileParser) protected readonly gitpodParser: GitpodFileParser;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
+    @inject(TheiaPluginService) protected readonly pluginService: TheiaPluginService;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(Config) protected readonly config: Config;
     @inject(ConfigurationService) protected readonly configurationService: ConfigurationService;
