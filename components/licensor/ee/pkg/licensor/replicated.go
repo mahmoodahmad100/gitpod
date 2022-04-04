@@ -82,7 +82,7 @@ func (e *ReplicatedEvaluator) Validate() (msg string, valid bool) {
 func defaultReplicatedLicense() *Evaluator {
 	// We modify the type of the default license to replicated
 	lic := defaultLicense
-	lic.Type = LicenseTypeReplicated
+	// lic.Type = LicenseTypeReplicated
 
 	return &Evaluator{
 		lic: lic,
@@ -106,7 +106,7 @@ func newReplicatedEvaluator(client *http.Client, domain string) (res *Evaluator)
 	lic := LicensePayload{
 		ID:    replicatedPayload.LicenseID,
 		Level: LevelEnterprise,
-		Type:  LicenseTypeReplicated,
+		// Type:  LicenseTypeReplicated,
 	}
 
 	// Search for the fields
