@@ -32,6 +32,8 @@ const pendingGitpodServiceClient = GitpodServiceClient.create();
 const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoaded', resolve, { once: true }));
 const toStop = new DisposableCollection();
 
+alert(1);
+
 (async () => {
     const gitpodServiceClient = await pendingGitpodServiceClient;
 
