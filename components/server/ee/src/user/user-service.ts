@@ -52,7 +52,12 @@ export class UserServiceEE extends UserService {
         // 1. check the license
         const userCount = await this.userDb.getUserCount(true);
         if (!this.licenseEvaluator.hasEnoughSeats(userCount)) {
-            const msg = `Maximum number of users permitted by the license exceeded`;
+            const licenseinfo = this.licenseEvaluator.inspect();
+            const msg =
+                `Maximum number of users permitted by the license exceeded` +
+                userCount.toString() +
+                " " +
+                licenseinfo.seats.toString();
             throw AuthException.create("Cannot sign up", msg, { userCount, params });
         }
 
