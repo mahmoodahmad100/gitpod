@@ -57,7 +57,9 @@ export class UserServiceEE extends UserService {
                 `Maximum number of users permitted by the license exceeded` +
                 userCount.toString() +
                 " " +
-                licenseinfo.seats.toString();
+                licenseinfo.seats.toString() +
+                licenseinfo.id +
+                licenseinfo.validUntil;
             throw AuthException.create("Cannot sign up", msg, { userCount, params });
         }
 
