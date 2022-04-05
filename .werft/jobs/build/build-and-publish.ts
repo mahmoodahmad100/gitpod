@@ -65,6 +65,7 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
             exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
         }
     }
+    werft.endPhase("build");
 }
 
 /**
