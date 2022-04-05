@@ -1,6 +1,8 @@
 import { exec } from './shell';
 import { sleep } from './util';
 import { getGlobalWerftInstance } from './werft';
+import { DNS, Record } from '@google-cloud/dns';
+import { GCLOUD_SERVICE_ACCOUNT_PATH } from '../jobs/build/const';
 
 export async function deleteExternalIp(phase: string, name: string, region = "europe-west1") {
     const werft = getGlobalWerftInstance()
@@ -32,4 +34,29 @@ export async function deleteExternalIp(phase: string, name: string, region = "eu
 
 function getExternalIp(name: string, region = "europe-west1") {
     return exec(`gcloud compute addresses describe ${name} --region ${region}| grep 'address:' | cut -c 10-`, { silent: true }).trim();
+}
+
+export function createDNSRecord(domain: string, dnsZone: string, IP: string, slice: string) {
+    const werft = getGlobalWerftInstance()
+    werft.log(slice, `Creating DNS record. domain: ${domain} DNSZone: ${dnsZone} IPAddress: ${IP}`)
+
+    const dnsClient = new DNS({
+        projectId: 'gitpod-dev',
+        keyFilename: GCLOUD_SERVICE_ACCOUNT_PATH
+    })
+    const zone = dnsClient.zone(dnsZone)
+    const record = new Record(zone, 'a', {
+        name: domain,
+        ttl: 300,
+        signatureRrdatas: [IP],
+        data: IP
+    })
+
+    zone.addRecords(record).then(rsp => {
+        werft.log(slice, `DNS Record created`)
+    }, err => {
+        throw new Error(err);
+    }).catch(err => {
+        throw new Error(err);
+    })
 }
