@@ -443,7 +443,7 @@ function GitIntegrations() {
             <div className="flex items-start sm:justify-between mb-2">
                 <div>
                     <h3>Git Integrations</h3>
-                    <h2>Manage Git integrations for GitLab or GitHub self-hosted instances.</h2>
+                    <h2>Manage Git integrations for self-managed instances of GitLab, GitHub, or Bitbucket.</h2>
                 </div>
                 {providers.length !== 0 ? (
                     <div className="mt-3 flex mt-0">
@@ -710,6 +710,8 @@ export function GitIntegrationModal(
                 return "github.example.com";
             case "GitLab":
                 return "gitlab.example.com";
+            case "BitbucketServer":
+                return "bitbucket.example.com";
             default:
                 return "";
         }
@@ -737,7 +739,7 @@ export function GitIntegrationModal(
                 <div className="flex flex-col">
                     <span className="text-gray-500">
                         {props.headerText ||
-                            "Configure a Git integration with a GitLab or GitHub self-hosted instance."}
+                            "Configure an integration with a self-managed instance of GitLab, GitHub, or Bitbucket."}
                     </span>
                 </div>
 
@@ -756,7 +758,24 @@ export function GitIntegrationModal(
                             >
                                 <option value="GitHub">GitHub</option>
                                 <option value="GitLab">GitLab</option>
+                                <option value="BitbucketServer">Bitbucket Server</option>
                             </select>
+                        </div>
+                    )}
+                    {mode === "new" && type === "BitbucketServer" && (
+                        <div className="flex rounded-md bg-orange-300 p-3">
+                            <img className="w-4 h-4 mx-2 my-auto filter-brightness-10" src={exclamation} />
+                            <span className="text-white">
+                                Support for OAuth2 in Bitbucket Server was{" "}
+                                <a
+                                    target="_blank"
+                                    href="https://confluence.atlassian.com/bitbucketserver/bitbucket-data-center-and-server-7-20-release-notes-1101934428.html"
+                                    rel="noopener noreferrer"
+                                    className="gp-link"
+                                >
+                                    added in version 7.20
+                                </a>
+                            </span>
                         </div>
                     )}
                     <div className="flex flex-col space-y-2">
