@@ -6,17 +6,19 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
+	"io/fs"
+	// "io/ioutil"
+	// "log"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	// "gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	// "k8s.io/apimachinery/pkg/api/meta"
+	// corev1 "k8s.io/api/core/v1"
+	// "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	// // "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -24,37 +26,42 @@ import (
 var filterCmd = &cobra.Command{
 	Use:   "filter",
 	Short: "",
-	Args:  cobra.ExactArgs(0),
-	Run: func(cmd *cobra.Command, args []string) {
-		filter(cmd, args)
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		filter(args[0])
 	},
 }
 
-func filter(_ *cobra.Command, _ []string) {
-	input, err := ioutil.ReadAll(os.Stdin)
-	if err != nil {
-		log.Fatalf("failed to read from stdin: %s", err)
-	}
+func filter(dir string) {
+	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
 
-	obj, _, err := scheme.Codecs.UniversalDeserializer().Decode(input, nil, nil)
-	if err != nil {
-		log.Fatalf("failed to deserialize: %s", err)
-	}
+		fmt.Printf("reading %s\n", path)
+		yaml, err := os.ReadFile(path)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to read file: %s\n", path)
+			return nil
+		}
 
-	recurse(obj)
+		obj, _, err := scheme.Codecs.UniversalDeserializer().Decode(yaml, nil, nil)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to deserialize: %s\n", err)
+			return nil
+		}
+
+		handle(obj)
+		return nil
+	})
 }
 
-func recurse(obj runtime.Object) {
+func handle(obj runtime.Object) {
 	switch v := obj.(type) {
-	case *corev1.List:
-		fmt.Printf("object is a list\n")
-		for _, item := range v.Items {
-			fmt.Printf("one child: %v\n", item.Object)
-		}
 	case *appsv1.Deployment:
-		fmt.Printf("object is a deployment\n")
-		// default:
-		// 	fmt.Printf("object is something else\n")
+		fmt.Printf("object is a deployment: %s\n", v.Name)
+	default:
+		fmt.Printf("object is something else\n")
 	}
 }
 
