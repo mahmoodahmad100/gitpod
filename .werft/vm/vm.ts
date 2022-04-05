@@ -122,7 +122,7 @@ export function vmExists(options: { name: string }) {
  * Wait until the VM Instance reaches the Running status.
  * If the VM Instance doesn't reach Running before the timeoutMS it will throw an Error.
  */
-export function waitForVMReadiness(options: { name: string, timeoutSeconds: number, slice: string }) {
+export async function waitForVMReadiness(options: { name: string, timeoutSeconds: number, slice: string }) {
     const werft = getGlobalWerftInstance()
     const namespace = `preview-${options.name}`
 
@@ -142,7 +142,7 @@ export function waitForVMReadiness(options: { name: string, timeoutSeconds: numb
  * Copies the k3s kubeconfig out of the VM and places it at `path`
  * If it doesn't manage to do so before the timeout it will throw an Error
  */
-export function copyk3sKubeconfig(options: { name: string, timeoutMS: number, slice: string }) {
+export async function copyk3sKubeconfig(options: { name: string, timeoutMS: number, slice: string }) {
     const werft = getGlobalWerftInstance()
     const startTime = Date.now()
     while (true) {
@@ -167,7 +167,7 @@ export function copyk3sKubeconfig(options: { name: string, timeoutMS: number, sl
 /**
  * Proxy 127.0.0.1:22 to :22 in the VM through the k8s service
  */
-export function startSSHProxy(options: { name: string, slice: string }) {
+export async function startSSHProxy(options: { name: string, slice: string }) {
     const namespace = `preview-${options.name}`
     exec(`sudo kubectl --kubeconfig=${HARVESTER_KUBECONFIG_PATH} -n ${namespace} port-forward service/proxy 22:2200`, { async: true, silent: true, slice: options.slice, dontCheckRc: true })
 }
@@ -182,7 +182,7 @@ export function stopKubectlPortForwards() {
 /**
  * Install Fluent-Bit sending logs to GCP
  */
-export function installFluentBit(options: { namespace: string, kubeconfig: string, slice: string }) {
+export async function installFluentBit(options: { namespace: string, kubeconfig: string, slice: string }) {
     exec(`kubectl --kubeconfig ${options.kubeconfig} create secret generic fluent-bit-external --save-config --dry-run=client --from-file=credentials.json=/mnt/fluent-bit-external/credentials.json -o yaml | kubectl --kubeconfig ${options.kubeconfig} apply -n ${options.namespace} -f -`, { slice: options.slice, dontCheckRc: true })
     exec(`helm3 --kubeconfig ${options.kubeconfig} repo add fluent https://fluent.github.io/helm-charts`, { slice: options.slice, dontCheckRc: true })
     exec(`helm3 --kubeconfig ${options.kubeconfig} repo update`, { slice: options.slice, dontCheckRc: true })

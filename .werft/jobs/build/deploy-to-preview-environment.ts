@@ -110,15 +110,15 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         werft.phase(phases.VM, "Ensuring VM is ready for deployment");
 
         werft.log(vmSlices.VM_READINESS, 'Wait for VM readiness')
-        VM.waitForVMReadiness({ name: destname, timeoutSeconds: 60 * 10, slice: vmSlices.VM_READINESS })
+        await VM.waitForVMReadiness({ name: destname, timeoutSeconds: 60 * 10, slice: vmSlices.VM_READINESS })
         werft.done(vmSlices.VM_READINESS)
 
         werft.log(vmSlices.START_KUBECTL_PORT_FORWARDS, 'Starting SSH port forwarding')
-        VM.startSSHProxy({ name: destname, slice: vmSlices.START_KUBECTL_PORT_FORWARDS })
+        await VM.startSSHProxy({ name: destname, slice: vmSlices.START_KUBECTL_PORT_FORWARDS })
         werft.done(vmSlices.START_KUBECTL_PORT_FORWARDS)
 
         werft.log(vmSlices.KUBECONFIG, 'Copying k3s kubeconfig')
-        VM.copyk3sKubeconfig({ name: destname, timeoutMS: 1000 * 60 * 3, slice: vmSlices.KUBECONFIG })
+        await VM.copyk3sKubeconfig({ name: destname, timeoutMS: 1000 * 60 * 3, slice: vmSlices.KUBECONFIG })
         werft.done(vmSlices.KUBECONFIG)
 
         werft.log(vmSlices.WAIT_K3S, 'Wait for k3s')
@@ -135,7 +135,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         exec(`kubectl --kubeconfig ${PREVIEW_K3S_KUBECONFIG_PATH} apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
         werft.done(vmSlices.INSTALL_LETS_ENCRYPT_ISSUER)
 
-        VM.installFluentBit({ namespace: 'default', kubeconfig: PREVIEW_K3S_KUBECONFIG_PATH, slice: vmSlices.EXTERNAL_LOGGING })
+        await VM.installFluentBit({ namespace: 'default', kubeconfig: PREVIEW_K3S_KUBECONFIG_PATH, slice: vmSlices.EXTERNAL_LOGGING })
         werft.done(vmSlices.EXTERNAL_LOGGING)
 
         try {
@@ -149,8 +149,9 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             exec('exit 0')
         }
 
-        installMonitoring(PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
-        werft.done('observability')
+        //await installMonitoring(PREVIEW_K3S_KUBECONFIG_PATH, deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
+
+        werft.endPhase(phases.VM);
     }
 
     werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
@@ -170,16 +171,18 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             werft.log("warning!", "with-helm was specified, there's an Installer install, but, `with-clean-slate-deployment=false`, forcing to true.");
             deploymentConfig.cleanSlateDeployment = true;
         }
-        werft.done(phases.PREDEPLOY);
+        werft.endPhase(phases.PREDEPLOY);
         werft.phase(phases.DEPLOY, "deploying")
         await deployToDevWithHelm(werft, jobConfig, deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
+        werft.endPhase(phases.DEPLOY);
     } // scenario: you pushed code to an existing preview environment built with Helm, and didn't with-clean-slate-deployment=true'
     else if (hasGitpodHelmInstall && !deploymentConfig.cleanSlateDeployment) {
         werft.log("using Helm", "with-helm was not specified, but, a Helm installation exists, and this is not a clean slate deployment.");
         werft.log("tip", "Set 'with-clean-slate-deployment=true' if you wish to remove the Helm install and use the Installer.");
-        werft.done(phases.PREDEPLOY);
+        werft.endPhase(phases.PREDEPLOY);
         werft.phase(phases.DEPLOY, "deploying to dev with Helm");
         await deployToDevWithHelm(werft, jobConfig, deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
+        werft.endPhase(phases.DEPLOY);
     } else {
         // you get here if
         // ...it's a new install with no flag overrides or
@@ -187,9 +190,10 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         // ...you have a prexisting Helm install, set 'with-clean-slate-deployment=true', but did not specifiy 'with-helm=true'
         // Why? The installer is supposed to be a default so we all dog-food it.
         // But, its new, so this may help folks transition with less issues.
-        werft.done(phases.PREDEPLOY);
+        werft.endPhase(phases.PREDEPLOY);
         werft.phase(phases.DEPLOY, "deploying to dev with Installer");
         await deployToDevWithInstaller(werft, jobConfig, deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
+        werft.endPhase(phases.DEPLOY);
     }
 }
 
@@ -346,8 +350,6 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         exec(`/usr/local/bin/helm3 --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ./dev/charts/sweeper`);
     }
     werft.done("sweeper");
-
-    werft.done(phases.DEPLOY);
 
     async function cleanStateEnv(kubeconfig: string, shellOpts: ExecOptions) {
         await wipeAndRecreateNamespace(helmInstallName, namespace, kubeconfig, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE });
@@ -718,7 +720,7 @@ async function installMonitoring(kubeconfig: string, namespace: string, nodeExpo
     installMonitoringSatelliteParams.previewDomain = domain
     installMonitoringSatelliteParams.stackdriverServiceAccount = stackdriverServiceAccount
     installMonitoringSatelliteParams.withVM = withVM
-    installMonitoringSatellite(installMonitoringSatelliteParams);
+    await installMonitoringSatellite(installMonitoringSatelliteParams);
 }
 
 // returns the static IP address
